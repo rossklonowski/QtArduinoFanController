@@ -118,10 +118,10 @@ void loop (){
         
     ticks = 0;      // Reset passes count
     interrupts();   // Enable Interrupts
-    delay(1000);    // Wait a second to capture rotations
+    delay(500);    // Wait a second to capture rotations
     noInterrupts(); // Disable Interrupts to proceed with synchronous instructions
 
-    rpmCalc = ((ticks * 60) / fanspace[fan].fanDivider);
+    rpmCalc = ((ticks * 120) / fanspace[fan].fanDivider);
 
     Serial.println(rpmCalc); //
     

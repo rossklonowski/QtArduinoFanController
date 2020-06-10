@@ -19,6 +19,7 @@ private slots:
     void serialReceived();
     void serialSend();
     void updateFanSpeedText(int);
+    void splitSpeed(QByteArray);
 
 private:
     Ui::MainWindow *ui;

@@ -4,8 +4,10 @@
 #include <QDebug>
 #include <cmath>
 #include <QString>
+#include <QTextCodec>
 
 QSerialPort *serialPort;
+bool debug = true;
 
 MainWindow::MainWindow(QWidget *parent):
     QMainWindow(parent),
@@ -35,42 +37,99 @@ MainWindow::~MainWindow() //Destructor function
     serialPort->close();
 }
 
+void MainWindow::splitSpeed(QByteArray speedFromArduino){
+
+    speedFromArduino.replace('\r', ""); // Remove Carraige Return
+    speedFromArduino.replace('\n', ""); // Remove New Line Character return
+
+    QByteArray speedometerText = speedFromArduino; // Speedometer is an integer ONLY
+    int digits = speedometerText.length();         // Get Count
+
+    switch(digits) {
+        case 1 :
+            speedometerText.prepend("000");
+            ui->speed0->setStyleSheet("color : gray;");
+            ui->speed1->setStyleSheet("color : gray;");
+            ui->speed2->setStyleSheet("color : gray;");
+            ui->speed3->setStyleSheet("color : white;");
+            break;
+        case 2 :
+            speedometerText.prepend("00");
+            ui->speed0->setStyleSheet("color : gray;");
+            ui->speed1->setStyleSheet("color : gray;");
+            ui->speed2->setStyleSheet("color : white;");
+            ui->speed3->setStyleSheet("color : white;");
+            break;
+        case 3 :
+            speedometerText.prepend("0");
+            ui->speed0->setStyleSheet("color : gray;");
+            ui->speed1->setStyleSheet("color : white;");
+            ui->speed2->setStyleSheet("color : white;");
+            ui->speed3->setStyleSheet("color : white;");
+            break;
+        case 4 :
+            ui->speed0->setStyleSheet("color : white;");
+            ui->speed1->setStyleSheet("color : white;");
+            ui->speed2->setStyleSheet("color : white;");
+            ui->speed3->setStyleSheet("color : white;");
+            break;
+    }
+
+    const QString speed(speedometerText);   // Convert to qstring for setText function
+
+    ui->speed0->setText(speed[0]);  // Set left most digit of speedometer reading
+    ui->speed1->setText(speed[1]);
+    ui->speed2->setText(speed[2]);
+    ui->speed3->setText(speed[3]);  // Set right most digit of speedometer reading
+
+    if (debug) {
+        qDebug() << "DEBUG: Qbytearray: " << speedometerText;
+        qDebug() << "DEBUG: 0: " << speedometerText[0];
+        qDebug() << "DEBUG: 1: " << speedometerText[1];
+        qDebug() << "DEBUG: 3: " << speedometerText[2];
+        qDebug() << "DEBUG: 2: " << speedometerText[3];
+    }
+}
+
 QByteArray ba;
 
 void MainWindow::serialReceived(){
 
         ba.append(serialPort->readAll());
 
-        qDebug() << "Message: " << ba;
-        qDebug() << "Characters: " << ba.length();
+        if (debug){
+            qDebug() << "DEBUG: Message: " << ba;
+            qDebug() << "DEBUG: Message length: " << ba.length();
+        }
 
-        if(!ba.contains("\r\n"))
+        if (!ba.contains("\r\n"))
         {
             return;
         }
 
-        ui->label->setText(ba);
+        splitSpeed(ba);
+
         ba = "";
 }
 
 void MainWindow::serialSend(){
 
-    qDebug() << "Pressed";
+    if (debug) qDebug() << "DEBUG: Pressed";
 
     int percentOn = ui->percentSlider->value();
-    qDebug() << "DEBUG: SliderValue: " << ui->percentSlider->value();
-    qDebug() << "DEBUG: PercentOn: " << percentOn;
+    if (debug) qDebug() << "DEBUG: SliderValue: " << ui->percentSlider->value();
+    if (debug) qDebug() << "DEBUG: PercentOn: " << percentOn;
 
     double PWMduty = (percentOn/100.0) * 255.0;
-    qDebug() << "DEBUG: PWMduty " << PWMduty;
+    if (debug) qDebug() << "DEBUG: PWMduty " << PWMduty;
     PWMduty = round(PWMduty);
-    qDebug() << "DEBUG: PWMduty Rounded: " << PWMduty;
+    if (debug) qDebug() << "DEBUG: PWMduty Rounded: " << PWMduty;
 
     QString PWMdutyString = QString::number(PWMduty);
-    qDebug() << "DEBUG: PWMdutyString: " << PWMdutyString;
+    if (debug) qDebug() << "DEBUG: PWMdutyString: " << PWMdutyString;
     int lengthOfDuty = PWMdutyString.length();
 
-    qDebug() << "DEBUG: length of duty: " << lengthOfDuty;
+    if (debug) qDebug() << "DEBUG: length of duty: " << lengthOfDuty;
 
     switch(lengthOfDuty) {
        case 1 :
@@ -84,7 +143,7 @@ void MainWindow::serialSend(){
             break;
     }
 
-    qDebug() << "DEBUG: PWMdutyString: " << PWMdutyString;
+    if (debug) qDebug() << "DEBUG: PWMdutyString: " << PWMdutyString;
 
     QByteArray array = PWMdutyString.toLocal8Bit();
     char* buffer = array.data();
